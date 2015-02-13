@@ -1,0 +1,3 @@
+source 'https://gems.'
+
+gemspec
