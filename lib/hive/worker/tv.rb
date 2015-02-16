@@ -6,7 +6,7 @@ module Hive
     # The TV worker
     class Tv < Worker
       # Prepare the TV
-      def before_script(job, job_paths, script)
+      def pre_script(job, job_paths, script)
         url = job.application_url
         @log.info("Applicaiton url: #{url}")
 
@@ -46,11 +46,10 @@ module Hive
         retry_count = 0
         max_count = 15
         @log.info("Waiting for device to get into app")
-        # TODO from here
         Hive.devicedb.action(@options['id'], 'redirect', url, 3)
-        @log.info("Application name: #{@device.get_application_name}")
+        @log.info("Application name: #{Hive.devicedb.get_application(@options['id'])}")
         sleep 5
-        while @device.get_application_name == 'Titan TV'
+        while Hive.devicedb.get_application(@options['id']) == Hive.config.network.tv.titantv_name
           sleep 1
           if retry_count >= max_count
             @log.info("  (Resend redirect)")
@@ -59,7 +58,7 @@ module Hive
             retry_count = 0
           end
           retry_count += 1
-          self.log.info("  .#{retry_count}")
+          @log.info("  .#{retry_count}")
         end
 
         return nil
@@ -69,14 +68,15 @@ module Hive
         Hive::Messages::TvJob
       end
 
-      def cleanup
+      def post_script(job, job_paths, script)
         max_count = 15
         retry_count = max_count
         resend_count = 0
-        Hive.devicedb.action(@options['id'], 'redirect', 'http://10.10.32.17/titantv')
+        Hive.devicedb.action(@options['id'], 'redirect', Hive.config.network.tv.titantv_url)
         sleep 5
         @log.info("Waiting for holding app to launch")
-        while Hive.devicedb.get_application(@options['id']) != 'Titan TV'
+        # TODO from here
+        while Hive.devicedb.get_application(@options['id']) != Hive.config.network.tv.titantv_name
           if retry_count >= max_count
             resend_count = resend_count + 1
             # TODO Configuration option
@@ -84,7 +84,7 @@ module Hive
               raise FailedRedirect
             end
             @log.info("Redirecting to the holding app")
-            Hive.devicedb.action(@options['id'], 'redirect', 'http://10.10.32.17/titantv')
+            Hive.devicedb.action(@options['id'], 'redirect', Hive.config.network.tv.titantv_url)
             retry_count = 0
             sleep 5
           end

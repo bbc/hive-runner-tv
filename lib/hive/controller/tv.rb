@@ -11,6 +11,7 @@ module Hive
           device['queues'] = device['device_queues'].collect do |queue_details|
             queue_details['name']
           end
+          Hive.devicedb.action(device['id'], 'message', 'Found by hive. Waiting for work.')
           Object.const_get(@device_class).new(@config.merge(device))
         end
       end
