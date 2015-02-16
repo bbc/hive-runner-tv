@@ -1,4 +1,5 @@
 require 'hive/worker'
+require "hive/messages/tv_job"
 
 module Hive
   class Worker
