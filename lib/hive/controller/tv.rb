@@ -6,13 +6,18 @@ module Hive
     # The TV controller
     class Tv < Controller
       def detect
-        Hive.devicedb.find_disconnected_by_type('tv')['devices'].collect do |device|
-          Hive.logger.debug("Found TV #{device}")
-          device['queues'] = device['device_queues'].collect do |queue_details|
-            queue_details['name']
+        hive_details = Hive.devicedb('Hive').find(Hive.id)
+
+        if hive_details.key?('devices')
+          hive_details['devices'].collect do |device|
+            Hive.logger.debug("Found TV #{device}")
+            device['queues'] = device['device_queues'].collect do |queue_details|
+              queue_details['name']
+            end
+            Object.const_get(@device_class).new(@config.merge(device))
           end
-          Hive.devicedb.action(device['id'], 'message', 'Found by hive. Waiting for work.')
-          Object.const_get(@device_class).new(@config.merge(device))
+        else
+          []
         end
       end
     end
