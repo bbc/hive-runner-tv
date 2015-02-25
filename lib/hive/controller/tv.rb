@@ -1,0 +1,25 @@
+require 'hive/controller'
+require 'hive/worker/tv'
+
+module Hive
+  class Controller
+    # The TV controller
+    class Tv < Controller
+      def detect
+        hive_details = Hive.devicedb('Hive').find(Hive.id)
+
+        if hive_details.key?('devices')
+          hive_details['devices'].collect do |device|
+            Hive.logger.debug("Found TV #{device}")
+            device['queues'] = device['device_queues'].collect do |queue_details|
+              queue_details['name']
+            end
+            Object.const_get(@device_class).new(@config.merge(device))
+          end
+        else
+          []
+        end
+      end
+    end
+  end
+end
