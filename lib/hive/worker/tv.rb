@@ -1,5 +1,5 @@
 require 'hive/worker'
-require "hive/messages/tv_job"
+require 'hive/messages/tv_job'
 
 module Hive
   class Worker
@@ -24,8 +24,8 @@ module Hive
           # Not actually required but talkshow fails without it set
           script.set_env 'TALKSHOW_PORT', ts_port
         else
-          # TODO Get unique port
-          ts_port = @ts_port = 4567
+          ts_port = @ts_port = Hive::data_store.port.assign(Process.pid)
+          @log.info("Using talkshow on port #{ts_port}")
           # TODO Move this more centrally
           ip = Socket.ip_address_list.detect { |intf| intf.ipv4_private? }
           ts_address = ip.ip_address
@@ -46,14 +46,14 @@ module Hive
         retry_count = 0
         max_count = 15
         @log.info("Waiting for device to get into app")
-        Hive.devicedb.action(@options['id'], 'redirect', url, 3)
-        @log.info("Application name: #{Hive.devicedb.get_application(@options['id'])}")
+        Hive.devicedb('Device').action(@options['id'], 'redirect', url, 3)
+        @log.info("Application name: #{Hive.devicedb('Device').get_application(@options['id'])}")
         sleep 5
-        while Hive.devicedb.get_application(@options['id']) == Hive.config.network.tv.titantv_name
+        while Hive.devicedb('Device').get_application(@options['id']) == Hive.config.network.tv.titantv_name
           sleep 1
           if retry_count >= max_count
             @log.info("  (Resend redirect)")
-            Hive.devicedb.action(@options['id'], 'redirect', url, 3)
+            Hive.devicedb('Device').action(@options['id'], 'redirect', url, 3)
             sleep 5
             retry_count = 0
           end
@@ -69,14 +69,16 @@ module Hive
       end
 
       def post_script(job, job_paths, script)
+        Hive::data_store.port.release(@ts_port) if @ts_port
+
         max_count = 15
         retry_count = max_count
         resend_count = 0
-        Hive.devicedb.action(@options['id'], 'redirect', Hive.config.network.tv.titantv_url)
+        Hive.devicedb('Device').action(@options['id'], 'redirect', Hive.config.network.tv.titantv_url)
         sleep 5
         @log.info("Waiting for holding app to launch")
         # TODO from here
-        while Hive.devicedb.get_application(@options['id']) != Hive.config.network.tv.titantv_name
+        while Hive.devicedb('Device').get_application(@options['id']) != Hive.config.network.tv.titantv_name
           if retry_count >= max_count
             resend_count = resend_count + 1
             # TODO Configuration option
@@ -84,7 +86,7 @@ module Hive
               raise FailedRedirect
             end
             @log.info("Redirecting to the holding app")
-            Hive.devicedb.action(@options['id'], 'redirect', Hive.config.network.tv.titantv_url)
+            Hive.devicedb('Device').action(@options['id'], 'redirect', Hive.config.network.tv.titantv_url)
             retry_count = 0
             sleep 5
           end
@@ -92,8 +94,12 @@ module Hive
           @log.info("  .#{retry_count}")
           sleep 1
         end
+      end
 
-        # TODO Clean up @ts_port
+      def device_status
+        details = Hive.devicedb('Device').find(@options['id'])
+        @log.debug("Device details: #{details.inspect}")
+        details['status']
       end
     end
   end

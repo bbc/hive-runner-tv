@@ -9,5 +9,4 @@ Gem::Specification.new do |s|
   s.files       = Dir['README.md', 'lib/**/*.rb' ]
   s.homepage    = 'https://github.com/bbc-test/hive-runner-tv'
   s.license     = 'Apache2'
-  s.add_runtime_dependency 'devicedb_comms'
 end
