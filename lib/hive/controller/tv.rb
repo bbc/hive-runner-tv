@@ -17,7 +17,7 @@ module Hive
             Object.const_get(@device_class).new(@config.merge(device))
           end
         else
-          []
+          raise DeviceDetectionFailed
         end
       end
     end
