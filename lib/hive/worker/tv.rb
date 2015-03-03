@@ -8,7 +8,8 @@ module Hive
       # Prepare the TV
       def pre_script(job, job_paths, script)
         url = job.application_url
-        @log.info("Applicaiton url: #{url}")
+        @log.info("Application url: #{url}")
+        Hive.devicedb('Device').poll(@options['id'], 'busy')
 
         params = ""
 
@@ -94,12 +95,18 @@ module Hive
           @log.info("  .#{retry_count}")
           sleep 1
         end
+        Hive.devicedb('Device').poll(@options['id'], 'idle')
       end
 
       def device_status
         details = Hive.devicedb('Device').find(@options['id'])
         @log.debug("Device details: #{details.inspect}")
         details['status']
+      end
+
+      def checkout_code(repository, checkout_directory)
+        Hive.devicedb('Device').action(@option['id'], 'message', "Checking out code from #{repository}")
+        super
       end
     end
   end
