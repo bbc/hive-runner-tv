@@ -105,7 +105,7 @@ module Hive
       end
 
       def checkout_code(repository, checkout_directory)
-        Hive.devicedb('Device').action(@option['id'], 'message', "Checking out code from #{repository}")
+        Hive.devicedb('Device').action(@options['id'], 'message', "Checking out code from #{repository}")
         super
       end
     end
