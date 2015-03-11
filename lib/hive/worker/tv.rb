@@ -42,25 +42,12 @@ module Hive
         params += "&devicedbid=#{@options['id']}"
         url += params
 
-        @log.info("Redirecting TV to: #{url}")
-
-        retry_count = 0
-        max_count = 15
-        @log.info("Waiting for device to get into app")
-        Hive.devicedb('Device').action(@options['id'], 'redirect', url, 3)
-        @log.info("Application name: #{Hive.devicedb('Device').get_application(@options['id'])}")
-        sleep 5
-        while Hive.devicedb('Device').get_application(@options['id']) == Hive.config.network.tv.titantv_name
-          sleep 1
-          if retry_count >= max_count
-            @log.info("  (Resend redirect)")
-            Hive.devicedb('Device').action(@options['id'], 'redirect', url, 3)
-            sleep 5
-            retry_count = 0
-          end
-          retry_count += 1
-          @log.info("  .#{retry_count}")
-        end
+        self.redirect(
+          url: url,
+          old_app: Hive.config.network.tv.titantv_name,
+          # TODO
+          #new_app: job.app_name
+        )
 
         return nil
       end
@@ -72,29 +59,7 @@ module Hive
       def post_script(job, job_paths, script)
         Hive::data_store.port.release(@ts_port) if @ts_port
 
-        max_count = 15
-        retry_count = max_count
-        resend_count = 0
-        Hive.devicedb('Device').action(@options['id'], 'redirect', Hive.config.network.tv.titantv_url)
-        sleep 5
-        @log.info("Waiting for holding app to launch")
-        # TODO from here
-        while Hive.devicedb('Device').get_application(@options['id']) != Hive.config.network.tv.titantv_name
-          if retry_count >= max_count
-            resend_count = resend_count + 1
-            # TODO Configuration option
-            if resend_count > 30
-              raise FailedRedirect
-            end
-            @log.info("Redirecting to the holding app")
-            Hive.devicedb('Device').action(@options['id'], 'redirect', Hive.config.network.tv.titantv_url)
-            retry_count = 0
-            sleep 5
-          end
-          retry_count += 1
-          @log.info("  .#{retry_count}")
-          sleep 1
-        end
+        self.redirect(url: Hive.config.network.tv.titantv_url, new_app: Hive.config.network.tv.titantv_name)
         Hive.devicedb('Device').poll(@options['id'], 'idle')
       end
 
@@ -107,6 +72,40 @@ module Hive
       def checkout_code(repository, checkout_directory)
         Hive.devicedb('Device').action(@options['id'], 'message', "Checking out code from #{repository}")
         super
+      end
+
+      def redirect(opts)
+        raise ArgumentError if ! ( opts.has_key?(:url) && ( opts.has_key?(:old_app) || opts.has_key?(:new_app) ) )
+        @log.info("Redirecting to #{opts[:url]}")
+        Hive.devicedb('Device').action(@options['id'], 'redirect', opts[:url], 3)
+        sleep 5
+
+        max_wait_count = 15
+        wait_count = 0
+        max_retry_count = 15
+        retry_count = 0
+
+        app_name = Hive.devicedb('Device').get_application(@options['id'])
+        @log.debug("Current app: #{app_name}")
+        while (opts.has_key?(:new_app) && app_name != opts[:new_app]) || (opts.has_key?(:old_app) && app_name == opts[:old_app])
+          if wait_count >= max_wait_count
+            if retry_count >= max_retry_count
+              raise FailedRedirect
+            else
+              retry_count += 1
+              wait_count = 0
+              @log.info("Redirecting to #{opts[:url]} [#{retry_count}]")
+              Hive.devicedb('Device').action(@options['id'], 'redirect', opts[:url], 3)
+              sleep 5
+            end
+          else
+            wait_count += 1
+            @log.info("  . [#{wait_count}]")
+            sleep 1
+          end
+          app_name = Hive.devicedb('Device').get_application(@options['id'])
+          @log.debug("Current app: #{app_name}")
+        end
       end
     end
   end
