@@ -49,7 +49,8 @@ module Hive
           #new_app: job.app_name
         )
 
-        @monitor_pid = Process.fork do
+        @log.info("Starting TV Application monitor")
+        @monitor = Thread.new do
           loop do
             if Hive.devicedb('Device').get_application(@options['id']) == Hive.config.network.tv.titantv_name
               # TV has returned to the holding app
@@ -64,7 +65,6 @@ module Hive
           end
         end
 
-        @log.info("TV Application monitor PID: #{@monitor_pid}")
 
         return nil
       end
@@ -76,13 +76,8 @@ module Hive
       def post_script(job, job_paths, script)
         Hive::data_store.port.release(@ts_port) if @ts_port
 
-        Process.detach @monitor_pid
-        begin
-          @log.info('Terminating TV Application monitor')
-          Process.kill 'TERM', @monitor_pid
-        rescue
-          @log.warn('TV Application monitor had already terminated')
-        end
+        @log.info('Terminating TV Application monitor')
+        @monitor.exit
 
         self.redirect(url: Hive.config.network.tv.titantv_url, new_app: Hive.config.network.tv.titantv_name)
         Hive.devicedb('Device').poll(@options['id'], 'idle')
