@@ -49,6 +49,23 @@ module Hive
           #new_app: job.app_name
         )
 
+        @monitor_pid = Process.fork do
+          loop do
+            if Hive.devicedb('Device').get_application(@options['id']) == Hive.config.network.tv.titantv_name
+              # TV has returned to the holding app
+              # Put back in the app under test
+              self.redirect(
+                url: url,
+                old_app: Hive.config.network.tv.titantv_name,
+                log_prefix: '[TV app monitor] '
+              )
+            end
+            sleep 5
+          end
+        end
+
+        @log.info("TV Application monitor PID: #{@monitor_pid}")
+
         return nil
       end
 
@@ -58,6 +75,14 @@ module Hive
 
       def post_script(job, job_paths, script)
         Hive::data_store.port.release(@ts_port) if @ts_port
+
+        Process.detach @monitor_pid
+        begin
+          @log.info('Terminating TV Application monitor')
+          Process.kill 'TERM', @monitor_pid
+        rescue
+          @log.warn('TV Application monitor had already terminated')
+        end
 
         self.redirect(url: Hive.config.network.tv.titantv_url, new_app: Hive.config.network.tv.titantv_name)
         Hive.devicedb('Device').poll(@options['id'], 'idle')
@@ -76,17 +101,18 @@ module Hive
 
       def redirect(opts)
         raise ArgumentError if ! ( opts.has_key?(:url) && ( opts.has_key?(:old_app) || opts.has_key?(:new_app) ) )
-        @log.info("Redirecting to #{opts[:url]}")
+        opts[:log_prefix] ||= ''
+        @log.info("#{opts[:log_prefix]}Redirecting to #{opts[:url]}")
         Hive.devicedb('Device').action(@options['id'], 'redirect', opts[:url], 3)
         sleep 5
 
-        max_wait_count = 15
+        max_wait_count = 30
         wait_count = 0
         max_retry_count = 15
         retry_count = 0
 
         app_name = Hive.devicedb('Device').get_application(@options['id'])
-        @log.debug("Current app: #{app_name}")
+        @log.debug("#{opts[:log_prefix]}Current app: #{app_name}")
         while (opts.has_key?(:new_app) && app_name != opts[:new_app]) || (opts.has_key?(:old_app) && app_name == opts[:old_app])
           if wait_count >= max_wait_count
             if retry_count >= max_retry_count
@@ -94,17 +120,17 @@ module Hive
             else
               retry_count += 1
               wait_count = 0
-              @log.info("Redirecting to #{opts[:url]} [#{retry_count}]")
+              @log.info("#{opts[:log_prefix]}Redirecting to #{opts[:url]} [#{retry_count}]")
               Hive.devicedb('Device').action(@options['id'], 'redirect', opts[:url], 3)
               sleep 5
             end
           else
             wait_count += 1
-            @log.info("  . [#{wait_count}]")
+            @log.info("#{opts[:log_prefix]}  . [#{wait_count}]")
             sleep 1
           end
           app_name = Hive.devicedb('Device').get_application(@options['id'])
-          @log.debug("Current app: #{app_name}")
+          @log.debug("#{opts[:log_prefix]}Current app: #{app_name}")
         end
       end
     end
