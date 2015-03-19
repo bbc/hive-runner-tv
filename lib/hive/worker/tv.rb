@@ -5,6 +5,9 @@ module Hive
   class Worker
     # The TV worker
     class Tv < Worker
+      class FailedRedirect < StandardError
+      end
+
       # Prepare the TV
       def pre_script(job, job_paths, script)
         url = job.application_url
