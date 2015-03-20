@@ -80,7 +80,7 @@ module Hive
         Hive::data_store.port.release(@ts_port) if @ts_port
 
         @log.info('Terminating TV Application monitor')
-        @monitor.exit
+        @monitor.exit if @monitor
 
         self.redirect(url: Hive.config.network.tv.titantv_url, new_app: Hive.config.network.tv.titantv_name)
         Hive.devicedb('Device').poll(@options['id'], 'idle')
