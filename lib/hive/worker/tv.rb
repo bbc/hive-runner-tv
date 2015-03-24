@@ -92,6 +92,12 @@ module Hive
         details['status']
       end
 
+      def set_device_status(status)
+        @log.debug("Setting status of device to '#{status}'")
+        details = Hive.devicedb('Device').poll(@options['id'], status)
+        details['status']
+      end
+
       def checkout_code(repository, checkout_directory)
         Hive.devicedb('Device').action(@options['id'], 'message', "Checking out code from #{repository}")
         super
