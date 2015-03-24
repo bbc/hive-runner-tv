@@ -79,6 +79,10 @@ module Hive
       def post_script(job, job_paths, script)
         Hive::data_store.port.release(@ts_port) if @ts_port
 
+        signal_safe_post_script(job, job_paths, script)
+      end
+
+      def signal_safe_post_script(job, job_paths, script)
         @log.info('Terminating TV Application monitor')
         @monitor.exit if @monitor
 
