@@ -9,7 +9,7 @@ module Hive
         hive_details = Hive.devicedb('Hive').find(Hive.id)
 
         if hive_details.key?('devices')
-          hive_details['devices'].select { |d| d.['device_type'] == 'tv' }.collect do |device|
+          hive_details['devices'].select { |d| d['device_type'] == 'tv' }.collect do |device|
             Hive.logger.debug("Found TV #{device}")
             device['queues'] = device['device_queues'].collect do |queue_details|
               queue_details['name']
