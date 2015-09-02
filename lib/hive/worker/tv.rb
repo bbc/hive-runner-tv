@@ -24,6 +24,27 @@ module Hive
           ts_address = Hive.config.network.remote_talkshow_address
           ts_port = Hive.config.network.remote_talkshow_port_offset + @options['id']
           @log.info("Using remote talkshow on port #{ts_port}")
+
+          ts_http = Net::HTTP.new(ts_uri.host, ts_uri.port)
+          
+      #uri = URI.parse(url)
+
+      #@http = Net::HTTP.new(uri.host, uri.port)
+
+          if Hive.config.network.cert?
+            pem = File.read(Hive.config.network.cert)
+            ts_uri = URI.parse("https://#{ts_address}/port/#{ts_port}")
+            ts_http = Net::HTTP.new(ts_uri.host, ts_uri.port)
+            ts_http.use_ssl = true
+            ts_http.cert = OpenSSL::X509::Certificate.new(pem)
+            ts_http.key = OpenSSL::PKey::RSA.new(pem)
+            ts_http.verify_mode = OpenSSL::SSL::VERIFY_NONE
+          else
+            ts_uri = URI.parse("http://#{ts_address}/port/#{ts_port}")
+            ts_http = Net::HTTP.new(ts_uri.host, ts_uri.port)
+          end
+          ts_http.request(Net::HTTP::Get.new(ts_uri.request_uri))
+
           script.set_env 'TALKSHOW_REMOTE_URL', "http://#{ts_address}:#{ts_port}"
           # Not actually required but talkshow fails without it set
           script.set_env 'TALKSHOW_PORT', ts_port
