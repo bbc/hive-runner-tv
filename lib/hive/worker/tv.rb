@@ -8,6 +8,26 @@ module Hive
       class FailedRedirect < StandardError
       end
 
+      def initialize(config)
+        if Hive.config.controllers.tv.ir_blaster_clients.has_key?(config['id'])
+          require 'device_api/tv'
+          DeviceAPI::RatBlaster.configure do |config|
+            config.host = Hive.config.network.tv.ir_blaster_host if Hive.config.network.tv.ir_blaster_host?
+            config.port = Hive.config.network.tv.ir_blaster_port if Hive.config.network.tv.ir_blaster_port?
+          end
+
+          config.merge!({"device_api" => DeviceAPI::TV::Device.new(
+            ir: {
+              type: Hive.config.controllers.tv.ir_blaster_clients[config['id']].type,
+              mac: Hive.config.controllers.tv.ir_blaster_clients[config['id']].mac,
+              dataset: Hive.config.controllers.tv.ir_blaster_clients[config['id']].dataset,
+              output: Hive.config.controllers.tv.ir_blaster_clients[config['id']].output
+            }
+          )})
+        end
+        super(config)
+      end
+
       # Prepare the TV
       def pre_script(job, job_paths, script)
         url = job.application_url
