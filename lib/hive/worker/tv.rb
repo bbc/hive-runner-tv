@@ -17,6 +17,7 @@ module Hive
           end
 
           config.merge!({"device_api" => DeviceAPI::TV::Device.new(
+            id: config['id'],
             ir: {
               type: Hive.config.controllers.tv.ir_blaster_clients[config['id']].type,
               mac: Hive.config.controllers.tv.ir_blaster_clients[config['id']].mac,
@@ -24,6 +25,9 @@ module Hive
               output: Hive.config.controllers.tv.ir_blaster_clients[config['id']].output
             }
           )})
+          Hive.config.controllers.tv.ir_blaster_clients[config['id']].sequences.each do |name, pattern|
+            config['device_api'].set_sequence(name.to_sym, pattern)
+          end
         end
         super(config)
       end

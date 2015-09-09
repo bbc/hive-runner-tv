@@ -12,6 +12,11 @@ controllers:
         mac: <IR blaster mac address, eg 00-11-22-33-44-55>
         dataset: <IR blaster dataset name>
         output: <IP blaster output id>
+        sequences:
+          launch_titantv:
+            - signal:Power
+            - sleep:2
+            - signal:Power
 
 network:
   remote_talkshow_address: <talkshow url, eg talkshow.remote>
@@ -26,6 +31,7 @@ diagnostics:
   tv:
     uptime:
       reboot_time: <seconds between reboots>
+    dead:
 ```
 
 Note, the `ir\_blaster\_clients` section under `controllers` may ultimately
