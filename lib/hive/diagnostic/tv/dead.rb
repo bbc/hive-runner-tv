@@ -15,18 +15,28 @@ module Hive
         end
 
         def repair(result)
-          if @device_api.run_sequence(:launch_titantv)
-            # TODO need retries instead of just a single long sleep
-            sleep 30
-            case @device_api.status
-            when 'idle'
-              self.pass('Titan TV launched')
-            else
-              self.fail('Unable to launch Titan TV')
+          tries = [
+            [ :launch_titantv ],
+            [ :power_cycle, :launch_titantv ],
+            [ :power_on, :launch_titantv ]
+          ]
+
+          tries.each do |commands|
+            catch :commands_failed do
+              commands.each do |command|
+                throw :commands_failed if ! @device_api.run_sequence(command)
+              end
+              timeout = Time.now + 600
+              while Time.now < timeout
+                if @device_api.status == 'idle'
+                  return self.pass('Titan TV launched')
+                end
+                sleep 5
+              end
             end
-          else
-            self.fail('Unable to launch Titan TV')
           end
+
+          self.fail("Failed to recover device")
         end
       end
     end
