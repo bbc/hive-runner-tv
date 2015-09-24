@@ -9,7 +9,7 @@ module Hive
       end
 
       def initialize(config)
-        if Hive.config.controllers.tv.ir_blaster_clients.has_key?(config['id'])
+        if config.ir_blaster_clients.has_key?(config['id'])
           require 'device_api/tv'
           DeviceAPI::RatBlaster.configure do |config|
             config.host = Hive.config.network.tv.ir_blaster_host if Hive.config.network.tv.ir_blaster_host?
@@ -19,13 +19,13 @@ module Hive
           config.merge!({"device_api" => DeviceAPI::TV::Device.new(
             id: config['id'],
             ir: {
-              type: Hive.config.controllers.tv.ir_blaster_clients[config['id']].type,
-              mac: Hive.config.controllers.tv.ir_blaster_clients[config['id']].mac,
-              dataset: Hive.config.controllers.tv.ir_blaster_clients[config['id']].dataset,
-              output: Hive.config.controllers.tv.ir_blaster_clients[config['id']].output
+              type: config.ir_blaster_clients[config['id']].type,
+              mac: config.ir_blaster_clients[config['id']].mac,
+              dataset: config.ir_blaster_clients[config['id']].dataset,
+              output: config.ir_blaster_clients[config['id']].output
             }
           )})
-          Hive.config.controllers.tv.ir_blaster_clients[config['id']].sequences.each do |name, pattern|
+          config.ir_blaster_clients[config['id']].sequences.each do |name, pattern|
             config['device_api'].set_sequence(name.to_sym, pattern)
           end
         end
