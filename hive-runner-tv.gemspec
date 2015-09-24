@@ -9,4 +9,5 @@ Gem::Specification.new do |s|
   s.files       = Dir['README.md', 'lib/**/*.rb' ]
   s.homepage    = 'https://github.com/bbc-test/hive-runner-tv'
   s.license     = 'MIT'
+  s.add_dependency 'hive-runner', '>= 1.2.0'
 end
