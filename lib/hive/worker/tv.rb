@@ -28,7 +28,7 @@ module Hive
           # Not actually required but talkshow fails without it set
           script.set_env 'TALKSHOW_PORT', ts_port
         else
-          ts_port = @ts_port = Hive::data_store.port.assign(Process.pid)
+          ts_port = @ts_port = self.allocate_port
           @log.info("Using talkshow on port #{ts_port}")
           # TODO Move this more centrally
           ip = Socket.ip_address_list.detect { |intf| intf.ipv4_private? }
@@ -77,7 +77,7 @@ module Hive
       end
 
       def post_script(job, job_paths, script)
-        Hive::data_store.port.release(@ts_port) if @ts_port
+        self.release_port(@ts_port) if @ts_port
 
         signal_safe_post_script(job, job_paths, script)
       end

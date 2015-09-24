@@ -14,7 +14,7 @@ module Hive
             device['queues'] = device['device_queues'].collect do |queue_details|
               queue_details['name']
             end
-            Object.const_get(@device_class).new(@config.merge(device))
+            self.create_device(device)
           end
         else
           raise DeviceDetectionFailed
