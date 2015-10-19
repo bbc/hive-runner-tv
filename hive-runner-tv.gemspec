@@ -1,6 +1,6 @@
 Gem::Specification.new do |s|
   s.name        = 'hive-runner-tv'
-  s.version     = '0.0.3'
+  s.version     = '0.1.0'
   s.date        = Time.now.strftime("%Y-%m-%d")
   s.summary     = 'Hive Runner TV'
   s.description = 'The TV controller module for Hive Runner'
@@ -9,5 +9,5 @@ Gem::Specification.new do |s|
   s.files       = Dir['README.md', 'lib/**/*.rb' ]
   s.homepage    = 'https://github.com/bbc-test/hive-runner-tv'
   s.license     = 'MIT'
-  s.add_dependency 'hive-runner', '>= 1.2.0', '< 1.4'
+  s.add_dependency 'hive-runner', '~> 2.0.0'
 end
