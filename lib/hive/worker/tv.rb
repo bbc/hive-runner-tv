@@ -9,23 +9,23 @@ module Hive
       end
 
       def initialize(config)
-        if config.ir_blaster_clients.has_key?(config['id'])
+        if config['ir_blaster_clients'] and config['ir_blaster_clients'].has_key?(config['id'])
           require 'device_api/tv'
-          DeviceAPI::RatBlaster.configure do |config|
-            config.host = Hive.config.network.tv.ir_blaster_host if Hive.config.network.tv.ir_blaster_host?
-            config.port = Hive.config.network.tv.ir_blaster_port if Hive.config.network.tv.ir_blaster_port?
+          DeviceAPI::RatBlaster.configure do |rb_config|
+            rb_config.host = Hive.config.network.tv.ir_blaster_host if Hive.config.network.tv.ir_blaster_host?
+            rb_config.port = Hive.config.network.tv.ir_blaster_port if Hive.config.network.tv.ir_blaster_port?
           end
 
           config.merge!({"device_api" => DeviceAPI::TV::Device.new(
             id: config['id'],
             ir: {
-              type: config.ir_blaster_clients[config['id']].type,
-              mac: config.ir_blaster_clients[config['id']].mac,
-              dataset: config.ir_blaster_clients[config['id']].dataset,
-              output: config.ir_blaster_clients[config['id']].output
+              type: config['ir_blaster_clients'][config['id']].type,
+              mac: config['ir_blaster_clients'][config['id']].mac,
+              dataset: config['ir_blaster_clients'][config['id']].dataset,
+              output: config['ir_blaster_clients'][config['id']].output
             }
           )})
-          config.ir_blaster_clients[config['id']].sequences.each do |name, pattern|
+          config['ir_blaster_clients'][config['id']].sequences.each do |name, pattern|
             config['device_api'].set_sequence(name.to_sym, pattern)
           end
         end
