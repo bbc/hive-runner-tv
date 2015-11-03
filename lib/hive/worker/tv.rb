@@ -165,6 +165,13 @@ module Hive
           @log.debug("#{opts[:log_prefix]}Current app: #{app_name}")
         end
       end
+
+      # Between tests the TV must be in the holding app
+      def diagnostics
+        app_name = Hive.devicedb('Device').get_application(@options['id'])
+        raise DeviceNotReady.new("Current application: '#{app_name}'") if app_name != Hive.config.network.tv.titantv_name
+        super
+      end
     end
   end
 end
