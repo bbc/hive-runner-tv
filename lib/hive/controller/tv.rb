@@ -11,7 +11,7 @@ module Hive
         Hive.logger.debug("Device list: #{mm_device_list}")
         mm_devices = []
         if mm_device_list.is_a? Array
-          mm_device_list.select { |d| d['plugin_type'] == 'HiveMindTv::Plugin' }.collect do |device|
+          mm_device_list.select { |d| d['device_type'] == 'Tv' }.collect do |device|
             Hive.logger.debug("Found TV: #{device.inspect}")
             mm_devices << self.create_device(device)
           end
