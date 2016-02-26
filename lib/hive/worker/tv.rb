@@ -128,7 +128,6 @@ module Hive
       #def update_queues
       #  @log.debug("Updating queues")
       #  @log.debug(@hive_mind.device_details.inspect)
-      #  #@hive_mind.create_action(action_type: 'redirect', body: 'http://www.google.co.uk')
       #  @queues = [ "#{@hive_mind.device_details['brand']}-#{@hive_mind.device_details['model']}-test" ]
       #end
 
