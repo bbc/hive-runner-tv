@@ -123,8 +123,13 @@ module Hive
       def set_device_status(status)
         @log.debug("Setting status of device to '#{status}'")
         details = Hive.devicedb('Device').poll(@options['id'], status)
-        details['status']
       end
+
+      #def update_queues
+      #  @log.debug("Updating queues")
+      #  @log.debug(@hive_mind.device_details.inspect)
+      #  @queues = [ "#{@hive_mind.device_details['brand']}-#{@hive_mind.device_details['model']}-test" ]
+      #end
 
       def checkout_code(repository, checkout_directory)
         Hive.devicedb('Device').action(@options['id'], 'message', "Checking out code from #{repository}")
@@ -136,6 +141,7 @@ module Hive
         opts[:log_prefix] ||= ''
         @log.info("#{opts[:log_prefix]}Redirecting to #{opts[:url]}")
         Hive.devicedb('Device').action(@options['id'], 'redirect', opts[:url], 3)
+        #@hive_mind.create_action(action_type: 'redirect', body: opts[:url])
         sleep 5
 
         max_wait_count = 30
