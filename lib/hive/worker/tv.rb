@@ -36,7 +36,8 @@ module Hive
       def pre_script(job, job_paths, script)
         url = job.application_url
         @log.info("Application url: #{url}")
-        Hive.devicedb('Device').poll(@options['id'], 'busy')
+        # TODO Set device as busy in Hive mind
+        #Hive.devicedb('Device').poll(@options['id'], 'busy')
 
         params = ""
 
@@ -79,7 +80,8 @@ module Hive
         @log.info("Starting TV Application monitor")
         @monitor = Thread.new do
           loop do
-            if Hive.devicedb('Device').get_application(@options['id']) == Hive.config.network.tv.titantv_name
+            #if Hive.devicedb('Device').get_application(@options['id']) == Hive.config.network.tv.titantv_name
+            if @hive_mind.device_details(true)['application'] == Hive.config.network.tv.titantv_name
               # TV has returned to the holding app
               # Put back in the app under test
               self.redirect(
@@ -100,6 +102,10 @@ module Hive
         Hive::Messages::TvJob
       end
 
+      def mind_meld_klass
+        MindMeld::Tv
+      end
+
       def post_script(job, job_paths, script)
         self.release_port(@ts_port) if @ts_port
 
@@ -111,37 +117,40 @@ module Hive
         @monitor.exit if @monitor
 
         self.redirect(url: Hive.config.network.tv.titantv_url, new_app: Hive.config.network.tv.titantv_name)
-        Hive.devicedb('Device').poll(@options['id'], 'idle')
+        # TODO Set device as idle in Hive Mind
+        #Hive.devicedb('Device').poll(@options['id'], 'idle')
       end
 
-      def device_status
-        details = Hive.devicedb('Device').find(@options['id'])
-        @log.debug("Device details: #{details.inspect}")
-        details['status']
-      end
-
-      def set_device_status(status)
-        @log.debug("Setting status of device to '#{status}'")
-        details = Hive.devicedb('Device').poll(@options['id'], status)
-      end
-
-      #def update_queues
-      #  @log.debug("Updating queues")
-      #  @log.debug(@hive_mind.device_details.inspect)
-      #  @queues = [ "#{@hive_mind.device_details['brand']}-#{@hive_mind.device_details['model']}-test" ]
+      #def device_status
+      #  ## TODO Get status from Hive Mind
+      #  details = Hive.devicedb('Device').find(@options['id'])
+      #  @log.debug("Device details: #{details.inspect}")
+      #  details['status']
       #end
 
-      def checkout_code(repository, checkout_directory)
-        Hive.devicedb('Device').action(@options['id'], 'message', "Checking out code from #{repository}")
-        super
+      #def set_device_status(status)
+      #  ## TODO Set status from Hive Mind
+      #  @log.debug("Setting status of device to '#{status}'")
+      #  details = Hive.devicedb('Device').poll(@options['id'], status)
+      #end
+
+      def update_queues
+        @log.debug("Updating queues")
+        @log.debug(@hive_mind.device_details.inspect)
+        @queues = [ "#{@hive_mind.device_details['brand']}-#{@hive_mind.device_details['model']}-test" ]
       end
+
+      #def checkout_code(repository, checkout_directory)
+      #  Hive.devicedb('Device').action(@options['id'], 'message', "Checking out code from #{repository}")
+      #  super
+      #end
 
       def redirect(opts)
         raise ArgumentError if ! ( opts.has_key?(:url) && ( opts.has_key?(:old_app) || opts.has_key?(:new_app) ) )
         opts[:log_prefix] ||= ''
         @log.info("#{opts[:log_prefix]}Redirecting to #{opts[:url]}")
-        Hive.devicedb('Device').action(@options['id'], 'redirect', opts[:url], 3)
-        #@hive_mind.create_action(action_type: 'redirect', body: opts[:url])
+        #Hive.devicedb('Device').action(@options['id'], 'redirect', opts[:url], 3)
+        @hive_mind.create_action(action_type: 'redirect', body: opts[:url])
         sleep 5
 
         max_wait_count = 30
@@ -149,7 +158,8 @@ module Hive
         max_retry_count = 15
         retry_count = 0
 
-        app_name = Hive.devicedb('Device').get_application(@options['id'])
+        #app_name = Hive.devicedb('Device').get_application(@options['id'])
+        app_name = @hive_mind.device_details(true)['application']
         @log.debug("#{opts[:log_prefix]}Current app: #{app_name}")
         while (opts.has_key?(:new_app) && app_name != opts[:new_app]) || (opts.has_key?(:old_app) && app_name == opts[:old_app])
           if wait_count >= max_wait_count
@@ -159,7 +169,8 @@ module Hive
               retry_count += 1
               wait_count = 0
               @log.info("#{opts[:log_prefix]}Redirecting to #{opts[:url]} [#{retry_count}]")
-              Hive.devicedb('Device').action(@options['id'], 'redirect', opts[:url], 3)
+              @hive_mind.create_action(action_type: 'redirect', body: opts[:url])
+              #Hive.devicedb('Device').action(@options['id'], 'redirect', opts[:url], 3)
               sleep 5
             end
           else
@@ -167,14 +178,16 @@ module Hive
             @log.info("#{opts[:log_prefix]}  . [#{wait_count}]")
             sleep 1
           end
-          app_name = Hive.devicedb('Device').get_application(@options['id'])
+          #app_name = Hive.devicedb('Device').get_application(@options['id'])
+          app_name = @hive_mind.device_details(true)['application']
           @log.debug("#{opts[:log_prefix]}Current app: #{app_name}")
         end
       end
 
       # Between tests the TV must be in the holding app
       def diagnostics
-        app_name = Hive.devicedb('Device').get_application(@options['id'])
+        #app_name = Hive.devicedb('Device').get_application(@options['id'])
+        app_name = @hive_mind.device_details(true)['application']
         raise DeviceNotReady.new("Current application: '#{app_name}'") if app_name != Hive.config.network.tv.titantv_name
         super
       end
