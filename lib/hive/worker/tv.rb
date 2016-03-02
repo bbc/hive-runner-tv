@@ -1,5 +1,6 @@
 require 'hive/worker'
 require 'hive/messages/tv_job'
+require 'mind_meld/tv'
 
 module Hive
   class Worker
