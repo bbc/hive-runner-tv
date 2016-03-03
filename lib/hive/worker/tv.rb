@@ -46,7 +46,7 @@ module Hive
         # on the same network as the application.
         # For the moment, assume networks are '10.10.*.*' and'*.bbc.co.uk'
         # TODO Make this more general
-        if @options['features'].include?('cross_network_restriction') and /bbc.co.uk/.match url
+        if @options['features'] && @options['features'].include?('cross_network_restriction') and /bbc.co.uk/.match url
           ts_address = Hive.config.network.remote_talkshow_address
           ts_port = Hive.config.network.remote_talkshow_port_offset + @options['id']
           @log.info("Using remote talkshow on port #{ts_port}")
