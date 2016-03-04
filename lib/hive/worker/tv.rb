@@ -139,6 +139,7 @@ module Hive
         @log.debug("Updating queues")
         @log.debug(@hive_mind.device_details.inspect)
         @queues = [ "#{@hive_mind.device_details['brand']}-#{@hive_mind.device_details['model']}" ]
+        update_queue_log
       end
 
       #def checkout_code(repository, checkout_directory)
