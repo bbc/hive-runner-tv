@@ -44,3 +44,10 @@ To use an IR blaster with `hive-runner` add the line
     gem 'device_api-tv', git: 'git@github.com:bbc/device_api-tv'
 
 to the Hive's Gemfile and add the configuration as shown above.
+
+## License
+
+Hive Runner TV is available to everyone under the terms of the MIT open source licence.
+Take a look at the LICENSE file in the code.
+
+Copyright (c) 2016 BBC
