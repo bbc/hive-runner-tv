@@ -1,6 +1,7 @@
 require 'hive/worker'
 require 'hive/messages/tv_job'
 require 'mind_meld/tv'
+require 'talkshow'
 
 module Hive
   class Worker
@@ -80,6 +81,22 @@ module Hive
           # TODO
           #new_app: job.app_name
         )
+        #@hive_mind.create_action(action_type: 'redirect', body: opts[:url])
+        ts = Talkshow.new
+        ts.start_server(port: ts_port)
+        success = false
+        60.times do
+          begin
+            ts.execute_file( "#{Gem.dir}/gems/#{Meta::NAME}-#{Meta::VERSION}/js/hive_mind_com.js" )
+            ts.execute("hive_mind_com.init('Test app', 'http://titantv.dev.pod.bbc/titantv/')")
+            ts.execute("hive_mind_com.start()")
+            break
+          rescue Talkshow::Timeout
+           @log.info("Talkshow timeout")
+          end
+        end
+
+        ts.stop_server
 
         @log.info("Starting TV Application monitor")
         @monitor = Thread.new do
