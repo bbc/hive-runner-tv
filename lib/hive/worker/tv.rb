@@ -81,7 +81,7 @@ module Hive
         #  # TODO
         #  #new_app: job.app_name
         #)
-        @hive_mind.create_action(action_type: 'redirect', body: opts[:url])
+        @hive_mind.create_action(action_type: 'redirect', body: url)
         load_hive_mind ts_port, url
         #ts = Talkshow.new
         #ts.start_server(port: ts_port)
