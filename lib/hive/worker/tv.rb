@@ -52,7 +52,7 @@ module Hive
         # TODO Make this more general
         if @options['features'] && @options['features'].include?('cross_network_restriction') and /bbc.co.uk/.match url
           ts_address = Hive.config.network.remote_talkshow_address
-          ts_port = Hive.config.network.remote_talkshow_port_offset + @options['id']
+          ts_port = @ts_port = Hive.config.network.remote_talkshow_port_offset + @options['id']
           @log.info("Using remote talkshow on port #{ts_port}")
           script.set_env 'TALKSHOW_REMOTE_URL', "http://#{ts_address}:#{ts_port}"
           # Not actually required but talkshow fails without it set
@@ -72,49 +72,49 @@ module Hive
         else
           params = "?talkshowurl=#{ts_address}:#{ts_port}"
         end
-        params += "&devicedbid=#{@options['id']}"
+        #params += "&devicedbid=#{@options['id']}"
         url += params
 
-        self.redirect(
-          url: url,
-          old_app: Hive.config.network.tv.titantv_name,
-          # TODO
-          #new_app: job.app_name
-        )
-        #@hive_mind.create_action(action_type: 'redirect', body: opts[:url])
-        ts = Talkshow.new
-        ts.start_server(port: ts_port)
-        success = false
-        60.times do
-          begin
-            ts.execute_file( "#{Gem.dir}/gems/#{Meta::NAME}-#{Meta::VERSION}/js/hive_mind_com.js" )
-            ts.execute("hive_mind_com.init('Test app', 'http://titantv.dev.pod.bbc/titantv/')")
-            ts.execute("hive_mind_com.start()")
-            break
-          rescue Talkshow::Timeout
-           @log.info("Talkshow timeout")
-          end
-        end
+        #self.redirect(
+        #  url: url,
+        #  old_app: Hive.config.network.tv.titantv_name,
+        #  # TODO
+        #  #new_app: job.app_name
+        #)
+        @hive_mind.create_action(action_type: 'redirect', body: opts[:url])
+        load_hive_mind ts_port, url
+        #ts = Talkshow.new
+        #ts.start_server(port: ts_port)
+        #success = false
+        #60.times do
+        #  begin
+        #    ts.execute_file( "#{Gem.dir}/gems/#{Meta::NAME}-#{Meta::VERSION}/js/hive_mind_com.js" )
+        #    ts.execute("hive_mind_com.init('Test app', 'http://titantv.dev.pod.bbc/titantv/')")
+        #    ts.execute("hive_mind_com.start()")
+        #    break
+        #  rescue Talkshow::Timeout
+        #   @log.info("Talkshow timeout")
+        #  end
+        #end
 
-        ts.stop_server
+        #ts.stop_server
 
-        @log.info("Starting TV Application monitor")
-        @monitor = Thread.new do
-          loop do
-            #if Hive.devicedb('Device').get_application(@options['id']) == Hive.config.network.tv.titantv_name
-            if @hive_mind.device_details(true)['application'] == Hive.config.network.tv.titantv_name
-              # TV has returned to the holding app
-              # Put back in the app under test
-              self.redirect(
-                url: url,
-                old_app: Hive.config.network.tv.titantv_name,
-                log_prefix: '[TV app monitor] '
-              )
-            end
-            sleep 5
-          end
-        end
-
+        #@log.info("Starting TV Application monitor")
+        #@monitor = Thread.new do
+        #  loop do
+        #    #if Hive.devicedb('Device').get_application(@options['id']) == Hive.config.network.tv.titantv_name
+        #    if @hive_mind.device_details(true)['application'] == Hive.config.network.tv.titantv_name
+        #      # TV has returned to the holding app
+        #      # Put back in the app under test
+        #      self.redirect(
+        #        url: url,
+        #        old_app: Hive.config.network.tv.titantv_name,
+        #        log_prefix: '[TV app monitor] '
+        #      )
+        #    end
+        #    sleep 5
+        #  end
+        #end
 
         return nil
       end
@@ -166,6 +166,7 @@ module Hive
 
       def redirect(opts)
         raise ArgumentError if ! ( opts.has_key?(:url) && ( opts.has_key?(:old_app) || opts.has_key?(:new_app) ) )
+        load_hive_mind @ts_port, "Trying to redirect ..."
         opts[:log_prefix] ||= ''
         @log.info("#{opts[:log_prefix]}Redirecting to #{opts[:url]}")
         #Hive.devicedb('Device').action(@options['id'], 'redirect', opts[:url], 3)
@@ -210,6 +211,40 @@ module Hive
         raise DeviceNotReady.new("Current application: '#{app_name}'") if app_name != Hive.config.network.tv.titantv_name
         super
       end
+
+      def load_hive_mind ts_port, app_name
+        ts = Talkshow.new
+        @log.info("Port: #{ts_port}")
+        @log.info("App: #{app_name}")
+        @log.info("Logfile: #{@file_system.results_path}/talkshowserver.log")
+        @log.info("titantv_url: #{Hive.config.network.tv.titantv_url}")
+        ts.start_server(port: ts_port, logfile: "#{@file_system.results_path}/tal
+        60.times do
+          begin
+            ts.execute <<JS
+(function(){
+  var load_script = document.createElement('script');
+  load_script.type = 'text/javascript';
+  load_script.charset = 'utf-8';
+  load_script.src = '#{Hive.config.network.tv.titantv_url}/script/new_hive_mind_c
+  document.getElementsByTagName('head')[0].appendChild(load_script);
+  // Give it 10 seconds to load
+  // TODO Do this with a retry
+  setTimeout(function() {
+    hive_mind_com.init('#{app_name}', '#{Hive.config.network.tv.titantv_url}');
+    hive_mind_com.start();
+  }, 10000);
+  return true;
+})()
+JS
+            break
+          rescue Talkshow::Timeout
+            @log.info("Talkshow timeout")
+          end
+        end
+        ts.stop_server
+      end
+
     end
   end
 end
