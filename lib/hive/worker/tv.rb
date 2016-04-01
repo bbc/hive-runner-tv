@@ -218,7 +218,7 @@ module Hive
         @log.info("App: #{app_name}")
         @log.info("Logfile: #{@file_system.results_path}/talkshowserver.log")
         @log.info("titantv_url: #{Hive.config.network.tv.titantv_url}")
-        ts.start_server(port: ts_port, logfile: "#{@file_system.results_path}/tal
+        ts.start_server(port: ts_port, logfile: "#{@file_system.results_path}/talkshowserver.log")
         60.times do
           begin
             ts.execute <<JS
@@ -226,7 +226,7 @@ module Hive
   var load_script = document.createElement('script');
   load_script.type = 'text/javascript';
   load_script.charset = 'utf-8';
-  load_script.src = '#{Hive.config.network.tv.titantv_url}/script/new_hive_mind_c
+  load_script.src = '#{Hive.config.network.tv.titantv_url}/script/new_hive_mind_com.js';
   document.getElementsByTagName('head')[0].appendChild(load_script);
   // Give it 10 seconds to load
   // TODO Do this with a retry
