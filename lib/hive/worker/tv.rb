@@ -82,13 +82,17 @@ module Hive
         #  #new_app: job.app_name
         #)
         @hive_mind.create_action(action_type: 'redirect', body: url)
+        #self.redirect(
+        #  url: url,
+        #  old_app: Hive.config.network.tv.titantv_name
+        #)
         load_hive_mind ts_port, url
 
         @log.info("Starting TV Application monitor")
         @monitor = Thread.new do
           loop do
             poll_response = Hive.hive_mind.poll(@device_id)
-            if poll_response.is_a? Array and poll_resopnse.length > 0
+            if poll_response.is_a? Array and poll_response.length > 0
               @log.debug("[TV app monitor] Polled TV. Application = #{poll_response.first['application']}")
         #    #if Hive.devicedb('Device').get_application(@options['id']) == Hive.config.network.tv.titantv_name
         #    if @hive_mind.device_details(true)['application'] == Hive.config.network.tv.titantv_name
@@ -158,7 +162,7 @@ module Hive
 
       def redirect(opts)
         raise ArgumentError if ! ( opts.has_key?(:url) && ( opts.has_key?(:old_app) || opts.has_key?(:new_app) ) )
-        load_hive_mind @ts_port, "Trying to redirect ..."
+        load_hive_mind(@ts_port, opts[:old_app] || "Trying to redirect ...")
         opts[:log_prefix] ||= ''
         @log.info("#{opts[:log_prefix]}Redirecting to #{opts[:url]}")
         #Hive.devicedb('Device').action(@options['id'], 'redirect', opts[:url], 3)
