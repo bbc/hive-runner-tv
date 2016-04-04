@@ -83,38 +83,30 @@ module Hive
         #)
         @hive_mind.create_action(action_type: 'redirect', body: url)
         load_hive_mind ts_port, url
-        #ts = Talkshow.new
-        #ts.start_server(port: ts_port)
-        #success = false
-        #60.times do
-        #  begin
-        #    ts.execute_file( "#{Gem.dir}/gems/#{Meta::NAME}-#{Meta::VERSION}/js/hive_mind_com.js" )
-        #    ts.execute("hive_mind_com.init('Test app', 'http://titantv.dev.pod.bbc/titantv/')")
-        #    ts.execute("hive_mind_com.start()")
-        #    break
-        #  rescue Talkshow::Timeout
-        #   @log.info("Talkshow timeout")
-        #  end
-        #end
 
-        #ts.stop_server
-
-        #@log.info("Starting TV Application monitor")
-        #@monitor = Thread.new do
-        #  loop do
+        @log.info("Starting TV Application monitor")
+        @monitor = Thread.new do
+          loop do
+            poll_response = Hive.hive_mind.poll(@device_id)
+            if poll_response.is_a? Array and poll_resopnse.length > 0
+              @log.debug("[TV app monitor] Polled TV. Application = #{poll_response.first['application']}")
         #    #if Hive.devicedb('Device').get_application(@options['id']) == Hive.config.network.tv.titantv_name
         #    if @hive_mind.device_details(true)['application'] == Hive.config.network.tv.titantv_name
-        #      # TV has returned to the holding app
-        #      # Put back in the app under test
-        #      self.redirect(
-        #        url: url,
-        #        old_app: Hive.config.network.tv.titantv_name,
-        #        log_prefix: '[TV app monitor] '
-        #      )
-        #    end
-        #    sleep 5
-        #  end
-        #end
+              if poll_response.first['application'] == Hive.config.network.tv.titantv_name
+                # TV has returned to the holding app
+                # Put back in the app under test
+                self.redirect(
+                  url: url,
+                  old_app: Hive.config.network.tv.titantv_name,
+                  log_prefix: '[TV app monitor] '
+                )
+              end
+            else
+              @log.warn("[TV app monitor] Failed to poll TV")
+            end
+            sleep 5
+          end
+        end
 
         return nil
       end
