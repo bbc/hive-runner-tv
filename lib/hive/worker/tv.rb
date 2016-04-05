@@ -84,7 +84,7 @@ module Hive
         #@hive_mind.create_action(action_type: 'redirect', body: url)
         self.redirect(
           url: url,
-          old_app: Hive.config.network.tv.titantv_name
+          old_app: Hive.config.network.tv.titantv_name,
           skip_first_load: true
         )
         load_hive_mind ts_port, url
