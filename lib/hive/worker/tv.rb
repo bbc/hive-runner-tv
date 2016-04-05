@@ -81,34 +81,35 @@ module Hive
         #  # TODO
         #  #new_app: job.app_name
         #)
-        @hive_mind.create_action(action_type: 'redirect', body: url)
-        #self.redirect(
-        #  url: url,
-        #  old_app: Hive.config.network.tv.titantv_name
-        #)
+        #@hive_mind.create_action(action_type: 'redirect', body: url)
+        self.redirect(
+          url: url,
+          old_app: Hive.config.network.tv.titantv_name
+          skip_first_load: true
+        )
         load_hive_mind ts_port, url
 
         @log.info("Starting TV Application monitor")
         @monitor = Thread.new do
           loop do
             poll_response = Hive.hive_mind.poll(@device_id)
-            if poll_response.is_a? Array and poll_response.length > 0
-              @log.debug("[TV app monitor] Polled TV. Application = #{poll_response.first['application']}")
-        #    #if Hive.devicedb('Device').get_application(@options['id']) == Hive.config.network.tv.titantv_name
-        #    if @hive_mind.device_details(true)['application'] == Hive.config.network.tv.titantv_name
-              if poll_response.first['application'] == Hive.config.network.tv.titantv_name
-                # TV has returned to the holding app
-                # Put back in the app under test
-                self.redirect(
-                  url: url,
-                  old_app: Hive.config.network.tv.titantv_name,
-                  log_prefix: '[TV app monitor] '
-                )
-              end
-            else
-              @log.warn("[TV app monitor] Failed to poll TV")
-            end
-            sleep 5
+#            if poll_response.is_a? Array and poll_response.length > 0
+#              @log.debug("[TV app monitor] Polled TV. Application = #{poll_response.first['application']}")
+#        #    #if Hive.devicedb('Device').get_application(@options['id']) == Hive.config.network.tv.titantv_name
+#        #    if @hive_mind.device_details(true)['application'] == Hive.config.network.tv.titantv_name
+#              if poll_response.first['application'] == Hive.config.network.tv.titantv_name
+#                # TV has returned to the holding app
+#                # Put back in the app under test
+#                self.redirect(
+#                  url: url,
+#                  old_app: Hive.config.network.tv.titantv_name,
+#                  log_prefix: '[TV app monitor] '
+#                )
+#              end
+#            else
+#              @log.warn("[TV app monitor] Failed to poll TV")
+#            end
+            sleep 20
           end
         end
 
@@ -133,7 +134,7 @@ module Hive
         @log.info('Terminating TV Application monitor')
         @monitor.exit if @monitor
 
-        self.redirect(url: Hive.config.network.tv.titantv_url, new_app: Hive.config.network.tv.titantv_name)
+        self.redirect(url: Hive.config.network.tv.titantv_url, new_app: Hive.config.network.tv.titantv_name, skip_first_load: true)
         # TODO Set device as idle in Hive Mind
         #Hive.devicedb('Device').poll(@options['id'], 'idle')
       end
@@ -162,12 +163,13 @@ module Hive
 
       def redirect(opts)
         raise ArgumentError if ! ( opts.has_key?(:url) && ( opts.has_key?(:old_app) || opts.has_key?(:new_app) ) )
-        load_hive_mind(@ts_port, opts[:old_app] || "Trying to redirect ...")
+        load_hive_mind(@ts_port, opts[:old_app] || "Trying to redirect ...") if ! opts[:skip_first_load]
         opts[:log_prefix] ||= ''
         @log.info("#{opts[:log_prefix]}Redirecting to #{opts[:url]}")
         #Hive.devicedb('Device').action(@options['id'], 'redirect', opts[:url], 3)
         @hive_mind.create_action(action_type: 'redirect', body: opts[:url])
         sleep 5
+        load_hive_mind(@ts_port, opts[:url]) if ! opts[:skip_last_load]
 
         max_wait_count = 30
         wait_count = 0
@@ -192,7 +194,8 @@ module Hive
           else
             wait_count += 1
             @log.info("#{opts[:log_prefix]}  . [#{wait_count}]")
-            sleep 1
+            sleep 5
+            load_hive_mind(@ts_port, opts[:url]) if ! opts[:skip_last_load]
           end
           #app_name = Hive.devicedb('Device').get_application(@options['id'])
           app_name = @hive_mind.device_details(true)['application']
@@ -215,7 +218,7 @@ module Hive
         @log.info("Logfile: #{@file_system.results_path}/talkshowserver.log")
         @log.info("titantv_url: #{Hive.config.network.tv.titantv_url}")
         ts.start_server(port: ts_port, logfile: "#{@file_system.results_path}/talkshowserver.log")
-        60.times do
+        5.times do
           begin
             ts.execute <<JS
 (function(){
@@ -236,6 +239,7 @@ JS
             break
           rescue Talkshow::Timeout
             @log.info("Talkshow timeout")
+            sleep 5
           end
         end
         ts.stop_server
