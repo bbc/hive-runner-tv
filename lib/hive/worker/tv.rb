@@ -134,7 +134,7 @@ module Hive
         @log.info('Terminating TV Application monitor')
         @monitor.exit if @monitor
 
-        self.redirect(url: Hive.config.network.tv.titantv_url, new_app: Hive.config.network.tv.titantv_name, skip_first_load: true)
+        self.redirect(url: Hive.config.network.tv.titantv_url, new_app: Hive.config.network.tv.titantv_name, skip_last_load: true)
         # TODO Set device as idle in Hive Mind
         #Hive.devicedb('Device').poll(@options['id'], 'idle')
       end
