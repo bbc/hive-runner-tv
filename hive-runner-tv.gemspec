@@ -6,7 +6,7 @@ Gem::Specification.new do |s|
   s.description = 'The TV controller module for Hive Runner'
   s.authors     = ['Joe Haig']
   s.email       = 'joe.haig@bbc.co.uk'
-  s.files       = Dir['README.md', 'lib/**/*.rb', 'js/**/*.js' ]
+  s.files       = Dir['README.md', 'lib/**/*.rb' ]
   s.homepage    = 'https://github.com/bbc-test/hive-runner-tv'
   s.license     = 'MIT'
   s.add_dependency 'hive-runner', '~> 2.1'
