@@ -11,4 +11,5 @@ Gem::Specification.new do |s|
   s.license     = 'MIT'
   s.add_dependency 'hive-runner', '~> 2.1'
   s.add_dependency 'talkshow', '~> 1.4.1'
+  s.add_dependency 'res', '~> 1.2'
 end
