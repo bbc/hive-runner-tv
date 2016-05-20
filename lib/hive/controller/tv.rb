@@ -5,32 +5,42 @@ module Hive
   class Controller
     # The TV controller
     class Tv < Controller
+      @@exclusion = []
+
+      def self.add_exclusion ex
+        @@exclusion << ex
+      end
+
       def detect
         Hive.logger.debug("Checking Hive Mind")
-        mm_device_list = Hive.hive_mind.device_details['connected_devices']
-        Hive.logger.debug("Device list: #{mm_device_list}")
-        mm_devices = []
-        if mm_device_list.is_a? Array
-          mm_device_list.select { |d| d['device_type'] == 'Tv' }.collect do |device|
+        device_list = Hive.hive_mind.device_details['connected_devices']
+        Hive.logger.debug("Device list: #{device_list}")
+        devices = []
+        if device_list.is_a? Array
+          device_list.select { |d| valid? d }.collect do |device|
             Hive.logger.debug("Found TV: #{device.inspect}")
-            mm_devices << self.create_device(device)
+            devices << self.create_device(device)
           end
         else
-          mm_devices = []
+          devices = []
         end
-        Hive.logger.debug("Devices: #{mm_devices}")
+        Hive.logger.debug("Devices: #{devices}")
+        devices
+      end
 
-        hive_details = Hive.devicedb('Hive').find(Hive.id)
-        if hive_details.key?('devices')
-          hive_details['devices'].select { |d| d['device_type'] == 'tv' }.collect do |device|
-            Hive.logger.debug("Found TV #{device}")
-            device['queues'] = device['device_queues'].collect do |queue_details|
-              queue_details['name']
+      private
+      def valid? device
+        if device['device_type'] == 'Tv'
+          @@exclusion.each do |ex|
+            match = true
+            ex.each_pair do |key, value|
+              match = match && device[key.to_s] != value
             end
-            self.create_device(device)
+            return false if ! match
           end
+          return true
         else
-          raise DeviceDetectionFailed
+          false
         end
       end
     end
