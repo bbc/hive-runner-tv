@@ -86,7 +86,7 @@ module Hive
             poll_response = Hive.hive_mind.poll(@device_id)
 #            if poll_response.is_a? Array and poll_response.length > 0
 #              @log.debug("[TV app monitor] Polled TV. Application = #{poll_response.first['application']}")
-#        #    if @hive_mind.device_details(true)['application'] == Hive.config.network.tv.titantv_name
+#        #    if @hive_mind.device_details(refresh: true)['application'] == Hive.config.network.tv.titantv_name
 #              if poll_response.first['application'] == Hive.config.network.tv.titantv_name
 #                # TV has returned to the holding app
 #                # Put back in the app under test
@@ -156,7 +156,7 @@ module Hive
         max_retry_count = 15
         retry_count = 0
 
-        app_name = @hive_mind.device_details(true)['application']
+        app_name = @hive_mind.device_details(refresh: true)['application']
         @log.debug("#{opts[:log_prefix]}Current app: #{app_name}")
         while (opts.has_key?(:new_app) && app_name != opts[:new_app]) || (opts.has_key?(:old_app) && app_name == opts[:old_app])
           if wait_count >= max_wait_count
@@ -175,14 +175,14 @@ module Hive
             sleep 5
             load_hive_mind(@ts_port, opts[:url]) if ! opts[:skip_last_load]
           end
-          app_name = @hive_mind.device_details(true)['application']
+          app_name = @hive_mind.device_details(refresh: true)['application']
           @log.debug("#{opts[:log_prefix]}Current app: #{app_name}")
         end
       end
 
       # Between tests the TV must be in the holding app
       def diagnostics
-        app_name = @hive_mind.device_details(true)['application']
+        app_name = @hive_mind.device_details(refresh: true)['application']
         raise DeviceNotReady.new("Current application: '#{app_name}'") if app_name != Hive.config.network.tv.titantv_name
         super
       end

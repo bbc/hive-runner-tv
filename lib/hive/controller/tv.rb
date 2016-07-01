@@ -22,7 +22,7 @@ module Hive
             devices << self.create_device(device)
           end
         else
-          devices = []
+          raise Hive::Controller::DeviceDetectionFailed
         end
         Hive.logger.debug("Devices: #{devices}")
         devices
