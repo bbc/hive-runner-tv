@@ -1,5 +1,5 @@
 # hive-runner-tv
-TV module for Hive Runner
+TV module for Hive Runner. For a full list of release notes, see the [change log](CHANGELOG.md)
 
 ## Configuration file
 
