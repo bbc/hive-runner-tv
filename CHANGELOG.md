@@ -2,9 +2,15 @@
 
 ## [Unreleased](https://github.com/bbc/hive-runner-tv/tree/HEAD)
 
+[Full Changelog](https://github.com/bbc/hive-runner-tv/compare/v0.1.2...HEAD)
+
 **Closed issues:**
 
 - Use hive\_mind to find TVs [\#22](https://github.com/bbc/hive-runner-tv/issues/22)
+
+## [v0.1.2](https://github.com/bbc/hive-runner-tv/tree/v0.1.2) (2016-07-01)
+**Closed issues:**
+
 - Diagnostic to detect if TV is dead [\#16](https://github.com/bbc/hive-runner-tv/issues/16)
 - Network failure removes all TV devices [\#2](https://github.com/bbc/hive-runner-tv/issues/2)
 
