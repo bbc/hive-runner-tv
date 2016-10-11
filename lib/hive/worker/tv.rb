@@ -151,12 +151,16 @@ module Hive
         sleep 5
         load_hive_mind(@ts_port, opts[:url]) if ! opts[:skip_last_load]
 
-        max_wait_count = 30
+        max_wait_count = 10
         wait_count = 0
         max_retry_count = 15
         retry_count = 0
 
+        forced_redirect(opts)
+
         app_name = @hive_mind.device_details(refresh: true)['application']
+########################################################
+
         @log.debug("#{opts[:log_prefix]}Current app: #{app_name}")
         while (opts.has_key?(:new_app) && app_name != opts[:new_app]) || (opts.has_key?(:old_app) && app_name == opts[:old_app])
           if wait_count >= max_wait_count
@@ -167,12 +171,11 @@ module Hive
               wait_count = 0
               @log.info("#{opts[:log_prefix]}Redirecting to #{opts[:url]} [#{retry_count}]")
               @hive_mind.create_action(action_type: 'redirect', body: opts[:url])
-              sleep 5
+              sleep 2
             end
           else
             wait_count += 1
             @log.info("#{opts[:log_prefix]}  . [#{wait_count}]")
-            sleep 5
             load_hive_mind(@ts_port, opts[:url]) if ! opts[:skip_last_load]
           end
           app_name = @hive_mind.device_details(refresh: true)['application']
@@ -194,7 +197,7 @@ module Hive
         @log.info("Logfile: #{@file_system.results_path}/talkshowserver.log")
         @log.info("titantv_url: #{Hive.config.network.tv.titantv_url}")
         ts.start_server(port: ts_port, logfile: "#{@file_system.results_path}/talkshowserver.log")
-        5.times do
+        2.times do
           begin
             ts.execute <<JS
 (function(){
@@ -215,12 +218,14 @@ JS
             break
           rescue Talkshow::Timeout
             @log.info("Talkshow timeout")
-            sleep 5
+            sleep 1
           end
         end
         ts.stop_server
       end
 
+      def forced_redirect(opts)
+      end
     end
   end
 end
