@@ -159,8 +159,6 @@ module Hive
         forced_redirect(opts)
 
         app_name = @hive_mind.device_details(refresh: true)['application']
-########################################################
-
         @log.debug("#{opts[:log_prefix]}Current app: #{app_name}")
         while (opts.has_key?(:new_app) && app_name != opts[:new_app]) || (opts.has_key?(:old_app) && app_name == opts[:old_app])
           if wait_count >= max_wait_count
