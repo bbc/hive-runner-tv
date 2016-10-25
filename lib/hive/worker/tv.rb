@@ -175,6 +175,7 @@ module Hive
             wait_count += 1
             @log.info("#{opts[:log_prefix]}  . [#{wait_count}]")
             load_hive_mind(@ts_port, opts[:url]) if ! opts[:skip_last_load]
+            sleep 1
           end
           app_name = @hive_mind.device_details(refresh: true)['application']
           @log.debug("#{opts[:log_prefix]}Current app: #{app_name}")
