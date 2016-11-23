@@ -196,7 +196,7 @@ module Hive
         @log.info("Logfile: #{@file_system.results_path}/talkshowserver.log")
         @log.info("titantv_url: #{Hive.config.network.tv.titantv_url}")
         ts.start_server(port: ts_port, logfile: "#{@file_system.results_path}/talkshowserver.log")
-        2.times do
+        5.times do
           begin
             ts.execute <<JS
 (function(){
