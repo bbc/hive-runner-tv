@@ -224,7 +224,71 @@ JS
       end
 
       def forced_redirect(opts)
+        current_app = @hive_mind.device_details(refresh: true)['application']
+        @log.info("Current App: #{current_app}")
+        @log.info("Opts URL: #{opts[:url]}")
+        if opts[:url] == Hive.config.network.tv.titantv_url && opts[:url] != current_app && current_app != Hive.config.network.tv.titantv_name
+           @log.info("Redirecting to TitanTV app by exiting TVAPI")
+           ts = Talkshow.new
+           ts.start_server(port: @ts_port, logfile: "#{@file_system.results_path}/talkshowserver.log")
+             begin
+               ts.execute <<JS
+require(
+    [
+        "antie/application",
+        "antie/events/keyevent",
+        "antie/widgets/carousel"
+    ],
+    function( Application, KeyEvent, Carousel ) {
+
+        //require the Application Class - so we can get access the current application
+        TVAPI = {};
+        TVAPI.application  = Application.getCurrentApplication();
+        TVAPI.device       = TVAPI.application.getDevice();
+
+
+        TVAPI.isAppReady = function() {
+          var container = TVAPI.application.getRootWidget();
+          return !!container;
+        };
+
+        TVAPI.reload = function() {
+          window.location.reload();
+        };
+
+        TVAPI.hashLoad = function(hash) {
+          window.location.hash = hash
+          window.location.reload(true);
+        };
+
+
+        TVAPI.exitApp = function() {
+          return TVAPI.application.exit();
+        };
+    }
+);
+JS
+               ts.execute("TVAPI.exitApp();")
+               @log.info("Exit SUCCESS")
+             rescue
+               sleep 20
+               current_app = @hive_mind.device_details(refresh: true)['application']
+               @log.info("In rescue. Current App: #{current_app}")
+               if current_app == Hive.config.network.tv.titantv_name
+                 @log.info("Exited out of the app successfully ")
+               else
+                 @log.info("Forced redirect unsuccessful")
+               end
+             end
+             current_app = @hive_mind.device_details(refresh: true)['application']
+             @log.info(current_app)
+             @log.info("Stopping Server")
+             ts.stop_server
+             load_hive_mind(@ts_port, opts[:url]) if ! opts[:skip_last_load]
+        else
+           @log.info("Already on Titan TV")
+        end
+
       end
-    end
   end
 end
