@@ -246,7 +246,6 @@ require(
         TVAPI.application  = Application.getCurrentApplication();
         TVAPI.device       = TVAPI.application.getDevice();
 
-
         TVAPI.isAppReady = function() {
           var container = TVAPI.application.getRootWidget();
           return !!container;
@@ -255,12 +254,6 @@ require(
         TVAPI.reload = function() {
           window.location.reload();
         };
-
-        TVAPI.hashLoad = function(hash) {
-          window.location.hash = hash
-          window.location.reload(true);
-        };
-
 
         TVAPI.exitApp = function() {
           return TVAPI.application.exit();
@@ -271,7 +264,7 @@ JS
                ts.execute("TVAPI.exitApp();")
                @log.info("Exit SUCCESS")
              rescue
-               sleep 20
+               sleep 15
                current_app = @hive_mind.device_details(refresh: true)['application']
                @log.info("In rescue. Current App: #{current_app}")
                if current_app == Hive.config.network.tv.titantv_name
