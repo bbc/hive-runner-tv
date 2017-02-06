@@ -228,7 +228,7 @@ JS
         @log.info("Current App: #{current_app}")
         @log.info("Opts URL: #{opts[:url]}")
         if opts[:url] == Hive.config.network.tv.titantv_url && opts[:url] != current_app && current_app != Hive.config.network.tv.titantv_name
-           @log.info("Redirecting to TitanTV app by exiting TVAPI")
+           @log.info("Redirecting to TitanTV by exiting application")
            ts = Talkshow.new
            ts.start_server(port: @ts_port, logfile: "#{@file_system.results_path}/talkshowserver.log")
              begin
@@ -246,15 +246,6 @@ require(
         TVAPI.application  = Application.getCurrentApplication();
         TVAPI.device       = TVAPI.application.getDevice();
 
-        TVAPI.isAppReady = function() {
-          var container = TVAPI.application.getRootWidget();
-          return !!container;
-        };
-
-        TVAPI.reload = function() {
-          window.location.reload();
-        };
-
         TVAPI.exitApp = function() {
           return TVAPI.application.exit();
         };
@@ -262,24 +253,22 @@ require(
 );
 JS
                ts.execute("TVAPI.exitApp();")
-               @log.info("Exit SUCCESS")
+               @log.info("Exited out of the application")
              rescue
                sleep 15
                current_app = @hive_mind.device_details(refresh: true)['application']
-               @log.info("In rescue. Current App: #{current_app}")
                if current_app == Hive.config.network.tv.titantv_name
-                 @log.info("Exited out of the app successfully ")
+                 @log.info("Exited out of the application successfully")
                else
                  @log.info("Forced redirect unsuccessful")
                end
              end
              current_app = @hive_mind.device_details(refresh: true)['application']
-             @log.info(current_app)
-             @log.info("Stopping Server")
+             @log.info("Current App: #{current_app}")
              ts.stop_server
              load_hive_mind(@ts_port, opts[:url]) if ! opts[:skip_last_load]
         else
-           @log.info("Already on Titan TV")
+           @log.info("Already on Titan TV. Skipped forced redirect.")
         end
 
       end
