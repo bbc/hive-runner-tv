@@ -260,7 +260,7 @@ JS
                if current_app == Hive.config.network.tv.titantv_name
                  @log.info("Exited out of the application successfully")
                else
-                 @log.info("Forced redirect unsuccessful")
+                 @log.error("Forced redirect unsuccessful")
                end
              end
              current_app = @hive_mind.device_details(refresh: true)['application']
