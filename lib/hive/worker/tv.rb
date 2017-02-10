@@ -224,6 +224,53 @@ JS
       end
 
       def forced_redirect(opts)
+        current_app = @hive_mind.device_details(refresh: true)['application']
+        @log.info("Current App: #{current_app}")
+        @log.info("Opts URL: #{opts[:url]}")
+        if opts[:url] == Hive.config.network.tv.titantv_url && opts[:url] != current_app && current_app != Hive.config.network.tv.titantv_name
+           @log.info("Redirecting to TitanTV by exiting application")
+           ts = Talkshow.new
+           ts.start_server(port: @ts_port, logfile: "#{@file_system.results_path}/talkshowserver.log")
+             begin
+               ts.execute <<JS
+require(
+    [
+        "antie/application",
+        "antie/events/keyevent",
+        "antie/widgets/carousel"
+    ],
+    function( Application, KeyEvent, Carousel ) {
+
+        //require the Application Class - so we can get access the current application
+        TVAPI = {};
+        TVAPI.application  = Application.getCurrentApplication();
+        TVAPI.device       = TVAPI.application.getDevice();
+
+        TVAPI.exitApp = function() {
+          return TVAPI.application.exit();
+        };
+    }
+);
+JS
+               ts.execute("TVAPI.exitApp();")
+               @log.info("Exited out of the application")
+             rescue
+               sleep 15
+               current_app = @hive_mind.device_details(refresh: true)['application']
+               if current_app == Hive.config.network.tv.titantv_name
+                 @log.info("Exited out of the application successfully")
+               else
+                 @log.error("Forced redirect unsuccessful")
+               end
+             end
+             current_app = @hive_mind.device_details(refresh: true)['application']
+             @log.info("Current App: #{current_app}")
+             ts.stop_server
+             load_hive_mind(@ts_port, opts[:url]) if ! opts[:skip_last_load]
+        else
+           @log.info("Already on Titan TV. Skipped forced redirect.")
+        end
+
       end
     end
   end
