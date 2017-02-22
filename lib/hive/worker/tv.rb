@@ -126,6 +126,7 @@ module Hive
 
         self.redirect(url: Hive.config.network.tv.titantv_url, new_app: Hive.config.network.tv.titantv_name, skip_last_load: true)
         # TODO Set device as idle in Hive Mind
+
       end
 
       def device_status
@@ -185,11 +186,26 @@ module Hive
       # Between tests the TV must be in the holding app
       def diagnostics
         app_name = @hive_mind.device_details(refresh: true)['application']
-        raise DeviceNotReady.new("Current application: '#{app_name}'") if app_name != Hive.config.network.tv.titantv_name
+        if app_name != Hive.config.network.tv.titantv_name
+          raise DeviceNotReady.new("Current application: '#{app_name}'") if repair != Hive.config.network.tv.titantv_name
+        end
         super
       end
 
+      def repair
+        app_name = @hive_mind.device_details(refresh: true)['application']
+        count = 0
+        while app_name != Hive.config.network.tv.titantv_name or count < 3
+          self.redirect(url: Hive.config.network.tv.titantv_url, new_app: Hive.config.network.tv.titantv_name, skip_last_load: true)
+          count += 1
+          app_name = @hive_mind.device_details(refresh: true)['application']
+        end
+        app_name 
+      end
+     
+
       def load_hive_mind ts_port, app_name
+        system("lsof -t -i :#{ts_port} | xargs kill -9")
         ts = Talkshow.new
         @log.info("Port: #{ts_port}")
         @log.info("App: #{app_name}")
