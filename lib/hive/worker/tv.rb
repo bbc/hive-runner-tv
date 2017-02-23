@@ -186,8 +186,8 @@ module Hive
       # Between tests the TV must be in the holding app
       def diagnostics
         app_name = @hive_mind.device_details(refresh: true)['application']
-        @log.error("Repairing: TV is not on holding app")
         if app_name != Hive.config.network.tv.titantv_name
+        @log.error("Repairing: TV is not on holding app")
           raise DeviceNotReady.new("Current application: '#{app_name}'") if repair != Hive.config.network.tv.titantv_name
         end
         super
