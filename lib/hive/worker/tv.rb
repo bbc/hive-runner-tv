@@ -210,9 +210,9 @@ module Hive
         ts = Talkshow.new
         @log.info("Port: #{ts_port}")
         @log.info("App: #{app_name}")
-        @log.info("Logfile: #{@file_system.results_path}/talkshowserver.log")
+#        @log.info("Logfile: #{@file_system.results_path}/talkshowserver.log")
         @log.info("titantv_url: #{Hive.config.network.tv.titantv_url}")
-        ts.start_server(port: ts_port, logfile: "#{@file_system.results_path}/talkshowserver.log")
+        ts.start_server(port: ts_port)# , logfile: "#{@file_system.results_path}/talkshowserver.log")
         5.times do
           begin
             ts.execute <<JS
