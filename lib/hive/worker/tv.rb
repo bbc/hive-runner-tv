@@ -186,8 +186,8 @@ module Hive
       # Between tests the TV must be in the holding app
       def diagnostics
         app_name = @hive_mind.device_details(refresh: true)['application']
-        @log.error("Repairing: TV is not on holding app")
         if app_name != Hive.config.network.tv.titantv_name
+          @log.error("Repairing: TV is not on holding app")
           raise DeviceNotReady.new("Current application: '#{app_name}'") if repair != Hive.config.network.tv.titantv_name
         end
         super
@@ -207,9 +207,15 @@ module Hive
 
       def load_hive_mind ts_port, app_name
         system("lsof -t -i :#{ts_port} | xargs kill -9")
+        tmp = false
         ts = Talkshow.new
         @log.info("Port: #{ts_port}")
         @log.info("App: #{app_name}")
+        if !@file_system
+          require 'tmpdir'
+          tmp = true
+          @file_system = Hive::FileSystem.new(rand(10000), "/tmp", @log)
+        end
         @log.info("Logfile: #{@file_system.results_path}/talkshowserver.log")
         @log.info("titantv_url: #{Hive.config.network.tv.titantv_url}")
         ts.start_server(port: ts_port, logfile: "#{@file_system.results_path}/talkshowserver.log")
@@ -236,6 +242,10 @@ JS
             @log.info("Talkshow timeout")
             sleep 1
           end
+        end
+        if tmp
+          FileUtils.rm_r(@file_system.home_path)
+          @file_system = nil
         end
         ts.stop_server
       end
