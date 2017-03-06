@@ -212,7 +212,6 @@ module Hive
         @log.info("Port: #{ts_port}")
         @log.info("App: #{app_name}")
         if !@file_system
-          require 'tmpdir'
           tmp = true
           @file_system = Hive::FileSystem.new(rand(10000), "/tmp", @log)
         end
